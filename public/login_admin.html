@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio de Sesión</title>
+  <link rel="shortcut icon" href="./img/logo.ico" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-black text-white flex justify-between items-center px-4 py-3">
+    <img src="./img/logo.png" alt="Logo" class="h-8">
+    <div class="text-yellow-400 text-4xl font-bold">&#9776;</div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-grow flex flex-col items-center justify-center px-4 py-6">
+    <h1 class="text-2xl font-bold mb-6">Inicio de Sesión</h1>
+    <form id="loginForm" class="bg-gray-200 rounded-lg p-6 w-full max-w-md flex flex-col gap-6">
+
+      <!-- Correo -->
+      <div class="flex flex-col">
+        <label for="mail" class="mb-1 font-medium">Correo:</label>
+        <input id="mail" type="email" placeholder="Ingrese su correo electrónico" required
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700 placeholder-gray-500" />
+      </div>
+
+      <!-- Contraseña -->
+      <div class="flex flex-col">
+        <label for="contraseña" class="mb-1 font-medium">Contraseña:</label>
+        <input id="contraseña" type="password" placeholder="Ingrese su contraseña" required
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700 placeholder-gray-500" />
+      </div>
+
+      <!-- Botón -->
+      <button id="loginBtn" type="submit"
+              class="border-2 border-black rounded-full px-6 py-3 w-full text-lg font-medium hover:bg-black hover:text-white transition">
+        Iniciar sesión
+      </button>
+
+      <!-- Error -->
+      <p id="error" class="text-red-600 text-sm mt-2 hidden"></p>
+    </form>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-black text-white text-center py-2">
+    © Insights – Newlink Dominicana 2025
+  </footer>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorText = document.getElementById('error');
+    const loginBtn = document.getElementById('loginBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mail = document.getElementById('mail').value.trim();
+      const contraseña = document.getElementById('contraseña').value.trim();
+      if (!mail || !contraseña) {
+        errorText.textContent = 'Debe completar todos los campos.';
+        errorText.classList.remove('hidden');
+        return;
+      }
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Ingresando...';
+      errorText.classList.add('hidden');
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mail, contraseña })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('admin_nombre', data.nombre);
+          window.location.href = '/view_encuestadores.html';
+        } else {
+          throw new Error(data.message || 'Credenciales incorrectas');
+        }
+      } catch (err) {
+        errorText.textContent = err.message;
+        errorText.classList.remove('hidden');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Iniciar sesión';
+      }
+    });
+
+    function cerrarSesion() {
+      localStorage.removeItem('token');
+      window.location.href = '/login_admin.html';
+    }
+  </script>
+</body>
+</html>

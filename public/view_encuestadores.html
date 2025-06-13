@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Encuestadores</title>
+  <link rel="shortcut icon" href="./img/logo.ico" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-black text-white flex justify-between items-center px-4 py-3">
+    <img src="./img/logo.png" alt="Logo" class="h-8">
+    <div class="flex items-center gap-4">
+      <button onclick="cerrarSesion()"
+              class="text-sm border border-white px-3 py-1 rounded hover:bg-white hover:text-black transition">
+        Cerrar sesión
+      </button>
+      <div class="text-yellow-400 text-4xl font-bold">&#9776;</div>
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="flex-grow px-4 py-6">
+
+    <!-- Título y acciones -->
+    <div class="max-w-5xl mx-auto flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Encuestadores</h1>
+      <div class="flex items-center space-x-4">
+        <a href="proyectos.html"
+           class="border-2 border-black rounded-md px-4 py-2 text-base font-medium hover:bg-black hover:text-white transition">
+          Proyectos
+        </a>
+        <a href="add_encuestador.html"
+           class="bg-black rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-800 transition">
+          <span class="text-yellow-400 text-xl font-bold leading-none">+</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Tabla de encuestadores -->
+    <div class="max-w-5xl mx-auto bg-gray-200 rounded-lg overflow-hidden">
+      <table class="w-full table-auto text-sm">
+        <thead class="bg-gray-300">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold">#</th>
+            <th class="px-4 py-2 text-left font-semibold">Nombres</th>
+            <th class="px-4 py-2 text-left font-semibold">Status</th>
+            <th class="px-4 py-2 text-left font-semibold">Tools</th>
+          </tr>
+        </thead>
+        <tbody id="encuestadoresBody">
+          <!-- Filas se inyectan aquí -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mensaje vacío -->
+    <p id="vacioMsg" class="max-w-5xl mx-auto text-center text-gray-500 mt-6 hidden">
+      Aún no hay encuestadores registrados, prueba agregar uno nuevo.
+    </p>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-black text-white text-center py-2">
+    © Insights – Newlink Dominicana 2025
+  </footer>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login_admin.html';
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem('token');
+      window.location.href = '/login_admin.html';
+    }
+
+    function sanitize(str) {
+      return str?.replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;',
+        '"': '&quot;', "'": '&#039;'
+      }[m])) || '';
+    }
+
+    async function verificarToken() {
+      try {
+        const res = await fetch('/api/encuestadores/all', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          alert("Acceso no autorizado. Inicia sesión nuevamente.");
+          cerrarSesion();
+          return;
+        }
+        if (!res.ok) throw new Error();
+
+        const lista = await res.json();
+        renderizarEncuestadores(lista);
+      } catch {
+        alert("Error al verificar el acceso.");
+      }
+    }
+
+    function renderizarEncuestadores(lista) {
+      // Ordenar por carnet_asignado (numérico)
+      lista.sort((a, b) =>
+        a.carnet_asignado.localeCompare(b.carnet_asignado, undefined, { numeric: true })
+      );
+
+      const tbody = document.getElementById('encuestadoresBody');
+      const vacioMsg = document.getElementById('vacioMsg');
+      tbody.innerHTML = '';
+
+      if (lista.length === 0) {
+        vacioMsg.classList.remove('hidden');
+        return;
+      } else {
+        vacioMsg.classList.add('hidden');
+      }
+
+      lista.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-300';
+
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-left text-sm min-h-[40px] font-medium">
+            ${sanitize(e.carnet_asignado)}
+          </td>
+          <td class="px-4 py-2 text-left text-sm min-h-[40px]">
+            ${sanitize(e.nombre_completo)}
+          </td>
+          <td class="px-4 py-2 text-left text-sm min-h-[40px] font-semibold ${
+            e.estado === 'activo' ? 'text-green-500' : 'text-red-500'
+          }">
+            ${sanitize(e.estado)}
+          </td>
+          <td class="px-4 py-2 flex items-center gap-2 text-sm min-h-[40px]">
+            <button onclick="editarEncuestador('${e._id}')"
+                    class="text-green-500 text-xl hover:text-green-600 transition leading-none">▼</button>
+            <button onclick="eliminarEncuestador('${e._id}')"
+                    class="text-red-500 text-xl hover:text-red-600 transition leading-none">■</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editarEncuestador(id) {
+      window.location.href = `edit_encuestador.html?id=${id}`;
+    }
+
+    async function eliminarEncuestador(id) {
+      if (!confirm("¿Seguro que deseas eliminar este encuestador?")) return;
+      try {
+        const res = await fetch(`/api/encuestadores/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          location.reload();
+        } else {
+          const data = await res.json();
+          alert(data.message || "No se pudo eliminar el encuestador.");
+        }
+      } catch {
+        alert("Error al intentar eliminar.");
+      }
+    }
+
+    // Llamada inicial
+    verificarToken();
+
+    // Al volver de la pantalla anterior (back), recarga datos automáticamente
+    window.addEventListener('pageshow', (event) => {
+      // Si viene del cache (navegación back), refrescamos
+      if (event.persisted) {
+        verificarToken();
+      }
+    });
+  </script>
+</body>
+</html>

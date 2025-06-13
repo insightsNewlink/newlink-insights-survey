@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Editar Encuestador</title>
+  <link rel="shortcut icon" href="./img/logo.ico" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-black text-white flex justify-between items-center px-4 py-3">
+    <img src="./img/logo.png" alt="Logo" class="h-8">
+    <div class="flex items-center gap-4">
+      <button onclick="cerrarSesion()"
+              class="text-sm border border-white px-3 py-1 rounded hover:bg-white hover:text-black transition">
+        Cerrar sesión
+      </button>
+      <div class="text-yellow-400 text-4xl font-bold">&#9776;</div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-grow p-6">
+    <h1 class="text-2xl font-bold mb-6 text-center">Editar Encuestador</h1>
+
+    <form id="editForm"
+          class="bg-gray-200 rounded-lg p-6 max-w-lg mx-auto flex flex-col gap-4 text-left">
+
+      <!-- Foto URL + Status -->
+      <div class="flex gap-4">
+        <div class="flex-1 flex flex-col">
+          <label for="foto_url" class="mb-1 font-medium">Foto:</label>
+          <input id="foto_url" name="foto_url" type="url" placeholder="URL de la foto" required
+                 class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700"/>
+        </div>
+        <div class="w-32 flex flex-col">
+          <label for="estado" class="mb-1 font-medium">Status:</label>
+          <select id="estado" name="estado" required
+                  class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Nombre completo -->
+      <div class="flex flex-col">
+        <label for="nombre_completo" class="mb-1 font-medium">Nombre:</label>
+        <input id="nombre_completo" name="nombre_completo" type="text" placeholder="Nombre Completo" required
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700"/>
+      </div>
+
+      <!-- DNI / Cédula -->
+      <div class="flex flex-col">
+        <label for="cedula" class="mb-1 font-medium">DNI / Cédula:</label>
+        <input id="cedula" name="cedula" type="text" placeholder="XXX-XXXXXXXX-X" required
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700"/>
+      </div>
+
+      <!-- Carnet asignado -->
+      <div class="flex flex-col">
+        <label for="carnet_asignado" class="mb-1 font-medium">Carnet asignado:</label>
+        <input id="carnet_asignado" name="carnet_asignado" type="text" placeholder="XXXX" required
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700"/>
+      </div>
+
+      <!-- Función -->
+      <div class="flex flex-col">
+        <label for="funcion" class="mb-1 font-medium">Función:</label>
+        <input id="funcion" name="funcion" type="text" placeholder="Función/Puesto"
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700"/>
+      </div>
+
+      <!-- Proyecto -->
+      <div class="flex flex-col">
+        <label for="proyectoSelect" class="mb-1 font-medium">Proyecto:</label>
+        <select id="proyectoSelect" name="id_proyecto" required
+                class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700">
+          <option value="" disabled>Seleccione un proyecto</option>
+        </select>
+      </div>
+
+      <!-- Entidad -->
+      <div class="flex flex-col">
+        <label for="entidad_responsable" class="mb-1 font-medium">Entidad:</label>
+        <input id="entidad_responsable" name="entidad_responsable" type="text"
+               placeholder="Entidad Responsable"
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700"/>
+      </div>
+
+      <!-- Zona asignada -->
+      <div class="flex flex-col">
+        <label for="zona_designada" class="mb-1 font-medium">Zona asignada:</label>
+        <input id="zona_designada" name="zona_designada" type="text" placeholder="Zona asignada" required
+               class="border-2 border-black rounded-lg px-4 py-3 w-full text-gray-700"/>
+      </div>
+
+      <!-- Botones -->
+      <button type="submit"
+              class="border-2 border-black rounded-full px-6 py-3 w-full text-lg font-medium hover:bg-black hover:text-white transition">
+        Guardar cambios
+      </button>
+      <button type="button" onclick="window.location.href='view_encuestadores.html'"
+              class="bg-black text-yellow-400 rounded-lg px-6 py-3 w-full text-lg font-medium hover:bg-gray-800 transition">
+        Cancelar
+      </button>
+    </form>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-black text-white text-center py-2">
+    © Insights – Newlink Dominicana 2025
+  </footer>
+
+  <script>
+    const form = document.getElementById('editForm');
+    const proyectoSelect = document.getElementById('proyectoSelect');
+    const id = new URLSearchParams(window.location.search).get('id');
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      alert('Sesión expirada o inválida. Redirigiendo...');
+      window.location.href = '/login_admin.html';
+    }
+    if (!id) {
+      alert('ID de encuestador no válido.');
+      window.location.href = 'view_encuestadores.html';
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem('token');
+      window.location.href = '/login_admin.html';
+    }
+
+    function sanitize(str) {
+      return str?.replace(/&<>\"'/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+      }[m])) || '';
+    }
+
+    // Obtiene y rellena datos, retorna proyecto asignado
+    async function cargarEncuestador() {
+      const res = await fetch(`/api/encuestadores/id/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error();
+      const e = await res.json();
+
+      form.nombre_completo.value     = sanitize(e.nombre_completo);
+      form.cedula.value              = sanitize(e.cedula);
+      form.carnet_asignado.value     = sanitize(e.carnet_asignado);
+      form.funcion.value             = sanitize(e.funcion);
+      form.entidad_responsable.value = sanitize(e.entidad_responsable);
+      form.zona_designada.value      = sanitize(e.zona_designada);
+      form.foto_url.value            = sanitize(e.foto_url);
+      form.estado.value              = sanitize(e.estado);
+
+      return e.id_proyecto;
+    }
+
+    // Obtiene proyectos y luego asigna seleccionado
+    async function cargarProyectos() {
+      const res = await fetch('/api/proyectos', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error();
+      const proyectos = await res.json();
+
+      proyectos.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p._id;
+        opt.textContent = sanitize(p.nombre);
+        proyectoSelect.appendChild(opt);
+      });
+    }
+
+    (async () => {
+      try {
+        const selectedId = await cargarEncuestador();
+        await cargarProyectos();
+        proyectoSelect.value = selectedId; // asigna el proyecto existente
+      } catch {
+        alert('Error cargando datos. Redirigiendo...');
+        cerrarSesion();
+      }
+    })();
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = Object.fromEntries(new FormData(form).entries());
+      payload.es_confidencial = form.es_confidencial && form.es_confidencial.checked;
+
+      try {
+        const res = await fetch(`/api/encuestadores/id/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          alert('✅ Encuestador actualizado correctamente');
+          window.location.href = 'view_encuestadores.html';
+        } else if (res.status === 401) {
+          cerrarSesion();
+        } else {
+          const data = await res.json();
+          alert(data.message || '❌ Error al actualizar');
+        }
+      } catch {
+        alert('❌ Error en la operación. Redirigiendo...');
+        cerrarSesion();
+      }
+    });
+  </script>
+</body>
+</html>
